@@ -805,17 +805,83 @@
             videoPreview.srcObject = null;
         }
 
+        // 判斷是否為儲存空間不足（localStorage quota）
+        function isQuotaExceededError(e) {
+            return !!(e && (
+                e.name === 'QuotaExceededError' ||
+                e.code === 22 ||
+                e.code === 1014 ||
+                (typeof e.message === 'string' && /quota/i.test(e.message))
+            ));
+        }
+
+        // 嘗試釋放空間：優先刪掉最舊的 savedPhotos，避免平板直接卡死
+        function freeUpSpaceByTrimmingSavedPhotos() {
+            try { localStorage.removeItem('cameraData'); } catch (_) {}
+
+            let savedPhotos = [];
+            try {
+                savedPhotos = JSON.parse(localStorage.getItem('savedPhotos') || '[]');
+            } catch (_) {
+                savedPhotos = [];
+            }
+
+            if (!Array.isArray(savedPhotos) || savedPhotos.length === 0) return false;
+
+            // 新的在前、舊的在後：從尾巴開始刪
+            while (savedPhotos.length > 0) {
+                savedPhotos.pop();
+                try {
+                    localStorage.setItem('savedPhotos', JSON.stringify(savedPhotos));
+                    return true;
+                } catch (e) {
+                    if (!isQuotaExceededError(e)) return false;
+                    // 繼續刪更多
+                }
+            }
+
+            try {
+                localStorage.removeItem('savedPhotos');
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        // 嘗試保存 cameraData（如果爆 quota，會自動刪最舊照片後重試）
+        function saveCameraDataWithEviction(dataToPass) {
+            const payload = JSON.stringify(dataToPass);
+            try {
+                localStorage.setItem('cameraData', payload);
+                return true;
+            } catch (e) {
+                if (!isQuotaExceededError(e)) throw e;
+
+                // 先試著釋放空間再重試一次
+                const freed = freeUpSpaceByTrimmingSavedPhotos();
+                if (!freed) throw e;
+
+                localStorage.setItem('cameraData', payload);
+                return true;
+            }
+        }
+
         // 拍照
         function capturePhoto() {
             const video = videoPreview;
             if (!video || !video.videoWidth || !video.videoHeight) return;
             
             const canvasTemp = document.createElement('canvas');
-            canvasTemp.width = video.videoWidth;
-            canvasTemp.height = video.videoHeight;
+            // 平板 localStorage 很小：先縮圖 + 用 JPEG，避免 quota exceeded
+            const maxDim = 1280;
+            const srcW = video.videoWidth;
+            const srcH = video.videoHeight;
+            const scale = Math.min(1, maxDim / Math.max(srcW, srcH));
+            canvasTemp.width = Math.max(1, Math.round(srcW * scale));
+            canvasTemp.height = Math.max(1, Math.round(srcH * scale));
             const ctx = canvasTemp.getContext('2d');
-            ctx.drawImage(video, 0, 0);
-            capturedPhotoData = canvasTemp.toDataURL('image/png');
+            ctx.drawImage(video, 0, 0, canvasTemp.width, canvasTemp.height);
+            capturedPhotoData = canvasTemp.toDataURL('image/jpeg', 0.85);
             
             // 停止相機
             stopCamera();
@@ -848,7 +914,7 @@
                     timestamp: Date.now()
                 };
                 
-                localStorage.setItem('cameraData', JSON.stringify(dataToPass));
+                saveCameraDataWithEviction(dataToPass);
                 
                 // 驗證數據是否成功保存
                 const verifyData = localStorage.getItem('cameraData');
@@ -860,7 +926,11 @@
                 window.location.href = 'editor.html?fromCamera=1';
             } catch (e) {
                 console.error('保存數據失敗:', e);
-                alert('⚠️ 保存照片數據失敗！\n\n錯誤：' + e.message + '\n\n請檢查瀏覽器設定：\n1. 允許 Cookie 和網站數據\n2. 關閉追蹤預防功能\n3. 確保使用本地服務器運行（不要直接打開 HTML 文件）\n4. 重新拍照');
+                if (isQuotaExceededError(e)) {
+                    alert('⚠️ 儲存空間不足（The quota has been exceeded）！\n\n我已嘗試自動刪除最舊的照片釋放空間，但仍不足。\n\n建議：\n1. 到「照片區」刪掉一些舊照片（或清除網站資料）\n2. 重新拍照\n\n錯誤：' + e.message);
+                } else {
+                    alert('⚠️ 保存照片數據失敗！\n\n錯誤：' + e.message + '\n\n請檢查瀏覽器設定：\n1. 允許 Cookie 和網站數據\n2. 關閉追蹤預防功能\n3. 確保使用本地服務器運行（不要直接打開 HTML 文件）\n4. 重新拍照');
+                }
             }
         }
 
@@ -930,13 +1000,17 @@
                     timestamp: Date.now()
                 };
                 
-                localStorage.setItem('cameraData', JSON.stringify(dataToPass));
+                saveCameraDataWithEviction(dataToPass);
                 
                 // 跳轉到編輯頁面
                 window.location.href = 'editor.html?fromCamera=1';
             } catch (e) {
                 console.error('保存數據失敗:', e);
-                alert('保存照片數據失敗，請檢查瀏覽器設定後重試');
+                if (isQuotaExceededError(e)) {
+                    alert('⚠️ 儲存空間不足（The quota has been exceeded）！\n\n建議先刪掉一些舊照片/清除網站資料後再重試。');
+                } else {
+                    alert('保存照片數據失敗，請檢查瀏覽器設定後重試');
+                }
             }
         }
 
