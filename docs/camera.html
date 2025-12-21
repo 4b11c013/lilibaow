@@ -83,7 +83,7 @@
             align-items: center;
             gap: 24px;
             z-index: 100;
-            margin-top: -40px;
+            margin-top: -60px;
         }
 
         .camera-btn {
@@ -307,7 +307,7 @@
                 padding: 20px;
                 padding-bottom: 10px;
                 gap: 20px;
-                margin-top: -35px;
+                margin-top: -50px;
             }
 
             .camera-btn img {
@@ -342,7 +342,7 @@
                 padding: 16px;
                 padding-bottom: 8px;
                 gap: 16px;
-                margin-top: -30px;
+                margin-top: -45px;
             }
 
             .camera-btn img {
@@ -395,7 +395,7 @@
                 padding: 12px;
                 padding-bottom: 6px;
                 gap: 12px;
-                margin-top: -20px;
+                margin-top: -35px;
             }
 
             .camera-btn img {
@@ -466,7 +466,7 @@
                 padding: 32px;
                 padding-bottom: 16px;
                 gap: 32px;
-                margin-top: -50px;
+                margin-top: -70px;
             }
 
             .camera-btn img {
@@ -492,7 +492,7 @@
                 padding: 10px;
                 padding-bottom: 5px;
                 gap: 10px;
-                margin-top: -15px;
+                margin-top: -30px;
             }
 
             .camera-btn img {
@@ -566,45 +566,8 @@
     </div>
 
     <script>
-        // 照片框模板數據
-        const COSTUME_TEMPLATES = [
-            { 
-                id: 'frame1', 
-                name: '圓角相框', 
-                image: 'POT/template1.png.png',
-                photoArea: { x: 0.05, y: 0.05, width: 0.9, height: 0.9 }
-            },
-            { 
-                id: 'frame2', 
-                name: '方形相框', 
-                image: 'POT/template2.png.png',
-                photoArea: { x: 0.08, y: 0.08, width: 0.84, height: 0.84 }
-            },
-            { 
-                id: 'frame3', 
-                name: '橢圓相框', 
-                image: 'POT/template3.png.png',
-                photoArea: { x: 0.05, y: 0.08, width: 0.9, height: 0.84 }
-            },
-            { 
-                id: 'frame4', 
-                name: '心形相框', 
-                image: 'POT/template4.png.png',
-                photoArea: { x: 0.08, y: 0.12, width: 0.84, height: 0.76 }
-            },
-            { 
-                id: 'frame5', 
-                name: '星形相框', 
-                image: 'POT/template5.png.png',
-                photoArea: { x: 0.05, y: 0.05, width: 0.9, height: 0.9 }
-            },
-            { 
-                id: 'frame6', 
-                name: '花邊相框', 
-                image: 'POT/template6.png.png',
-                photoArea: { x: 0.06, y: 0.06, width: 0.88, height: 0.88 }
-            }
-        ];
+        // 照片框模板數據（目前未使用，保留空數組以備將來使用）
+        const COSTUME_TEMPLATES = [];
 
         let mediaStream = null;
         let capturedPhotoData = null;
@@ -715,9 +678,33 @@
 
         // 初始化相機
         async function startCamera() {
+            // 如果已經有相機在運行，先停止
+            if (mediaStream) {
+                stopCamera();
+            }
+
+            // 顯示載入狀態
+            captureBtn.disabled = true;
+            captureBtn.style.opacity = '0.5';
+            
             try {
+                // 檢查瀏覽器是否支持相機API
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('您的瀏覽器不支持相機功能，請使用 Chrome、Firefox 或 Edge 瀏覽器');
+                }
+
                 // 首先請求權限以獲取設備標籤
-                await navigator.mediaDevices.getUserMedia({ video: true });
+                try {
+                    await navigator.mediaDevices.getUserMedia({ video: true });
+                } catch (permissionError) {
+                    if (permissionError.name === 'NotAllowedError' || permissionError.name === 'PermissionDeniedError') {
+                        throw new Error('相機權限被拒絕，請在瀏覽器設定中允許使用相機');
+                    } else if (permissionError.name === 'NotFoundError' || permissionError.name === 'DevicesNotFoundError') {
+                        throw new Error('未找到攝像頭設備，請確認攝像頭已連接');
+                    } else {
+                        throw permissionError;
+                    }
+                }
                 
                 // 選擇外接攝像頭
                 const deviceId = await selectExternalCamera();
@@ -774,6 +761,9 @@
                 videoPreview.srcObject = stream;
                 console.log('✅ 已切換到後置攝像頭');
                 
+                // 等待視頻準備好
+                await waitForVideoReady();
+                
             } catch (error) {
                 console.error('無法開啟相機:', error);
                 // 最後嘗試：使用任何可用的攝像頭
@@ -786,14 +776,77 @@
                         mediaStream = stream;
                         videoPreview.srcObject = stream;
                         console.log('✅ 已使用可用的攝像頭');
+                        
+                        // 等待視頻準備好
+                        await waitForVideoReady();
                     } catch (finalError) {
                         console.error('所有攝像頭都無法開啟:', finalError);
-                        alert('無法開啟相機，請檢查：\n\n1. 外接攝像頭已正確連接\n2. 瀏覽器權限設定允許使用攝像頭\n3. 沒有其他應用程式正在使用攝像頭\n\n錯誤: ' + finalError.message);
+                        let errorMessage = '無法開啟相機，請檢查：\n\n';
+                        if (finalError.name === 'NotAllowedError' || finalError.name === 'PermissionDeniedError') {
+                            errorMessage += '1. 瀏覽器權限設定允許使用攝像頭\n';
+                        } else if (finalError.name === 'NotFoundError' || finalError.name === 'DevicesNotFoundError') {
+                            errorMessage += '1. 外接攝像頭已正確連接\n';
+                        } else {
+                            errorMessage += '1. 外接攝像頭已正確連接\n';
+                            errorMessage += '2. 瀏覽器權限設定允許使用攝像頭\n';
+                        }
+                        errorMessage += '3. 沒有其他應用程式正在使用攝像頭\n\n';
+                        errorMessage += '錯誤: ' + finalError.message;
+                        alert(errorMessage);
+                        captureBtn.disabled = false;
+                        captureBtn.style.opacity = '1';
                     }
                 } else {
-                    alert('無法開啟相機，請檢查權限設定\n\n錯誤: ' + error.message);
+                    let errorMessage = '無法開啟相機\n\n';
+                    if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                        errorMessage += '請在瀏覽器設定中允許使用相機權限';
+                    } else {
+                        errorMessage += '錯誤: ' + error.message;
+                    }
+                    alert(errorMessage);
+                    captureBtn.disabled = false;
+                    captureBtn.style.opacity = '1';
                 }
             }
+        }
+
+        // 等待視頻準備好
+        function waitForVideoReady() {
+            return new Promise((resolve, reject) => {
+                const video = videoPreview;
+                let attempts = 0;
+                const maxAttempts = 50; // 最多等待5秒
+
+                const checkReady = () => {
+                    attempts++;
+                    if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+                        console.log('✅ 視頻已準備好，尺寸:', video.videoWidth, 'x', video.videoHeight);
+                        captureBtn.disabled = false;
+                        captureBtn.style.opacity = '1';
+                        resolve();
+                    } else if (attempts >= maxAttempts) {
+                        console.warn('⚠️ 視頻準備超時');
+                        captureBtn.disabled = false;
+                        captureBtn.style.opacity = '1';
+                        reject(new Error('視頻準備超時'));
+                    } else {
+                        setTimeout(checkReady, 100);
+                    }
+                };
+
+                // 監聽 loadedmetadata 事件
+                video.addEventListener('loadedmetadata', () => {
+                    if (video.videoWidth > 0 && video.videoHeight > 0) {
+                        console.log('✅ 視頻元數據已載入，尺寸:', video.videoWidth, 'x', video.videoHeight);
+                        captureBtn.disabled = false;
+                        captureBtn.style.opacity = '1';
+                        resolve();
+                    }
+                }, { once: true });
+
+                // 開始檢查
+                checkReady();
+            });
         }
 
         // 停止相機
@@ -805,101 +858,97 @@
             videoPreview.srcObject = null;
         }
 
-        // 判斷是否為儲存空間不足（localStorage quota）
-        function isQuotaExceededError(e) {
-            return !!(e && (
-                e.name === 'QuotaExceededError' ||
-                e.code === 22 ||
-                e.code === 1014 ||
-                (typeof e.message === 'string' && /quota/i.test(e.message))
-            ));
-        }
-
-        // 嘗試釋放空間：優先刪掉最舊的 savedPhotos，避免平板直接卡死
-        function freeUpSpaceByTrimmingSavedPhotos() {
-            try { localStorage.removeItem('cameraData'); } catch (_) {}
-
-            let savedPhotos = [];
-            try {
-                savedPhotos = JSON.parse(localStorage.getItem('savedPhotos') || '[]');
-            } catch (_) {
-                savedPhotos = [];
-            }
-
-            if (!Array.isArray(savedPhotos) || savedPhotos.length === 0) return false;
-
-            // 新的在前、舊的在後：從尾巴開始刪
-            while (savedPhotos.length > 0) {
-                savedPhotos.pop();
-                try {
-                    localStorage.setItem('savedPhotos', JSON.stringify(savedPhotos));
-                    return true;
-                } catch (e) {
-                    if (!isQuotaExceededError(e)) return false;
-                    // 繼續刪更多
-                }
-            }
-
-            try {
-                localStorage.removeItem('savedPhotos');
-                return true;
-            } catch (_) {
-                return false;
-            }
-        }
-
-        // 嘗試保存 cameraData（如果爆 quota，會自動刪最舊照片後重試）
-        function saveCameraDataWithEviction(dataToPass) {
-            const payload = JSON.stringify(dataToPass);
-            try {
-                localStorage.setItem('cameraData', payload);
-                return true;
-            } catch (e) {
-                if (!isQuotaExceededError(e)) throw e;
-
-                // 先試著釋放空間再重試一次
-                const freed = freeUpSpaceByTrimmingSavedPhotos();
-                if (!freed) throw e;
-
-                localStorage.setItem('cameraData', payload);
-                return true;
-            }
-        }
-
         // 拍照
         function capturePhoto() {
+            // 防止重複點擊
+            if (captureBtn.disabled) {
+                return;
+            }
+
             const video = videoPreview;
-            if (!video || !video.videoWidth || !video.videoHeight) return;
             
-            const canvasTemp = document.createElement('canvas');
-            // 平板 localStorage 很小：先縮圖 + 用 JPEG，避免 quota exceeded
-            const maxDim = 1280;
-            const srcW = video.videoWidth;
-            const srcH = video.videoHeight;
-            const scale = Math.min(1, maxDim / Math.max(srcW, srcH));
-            canvasTemp.width = Math.max(1, Math.round(srcW * scale));
-            canvasTemp.height = Math.max(1, Math.round(srcH * scale));
-            const ctx = canvasTemp.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvasTemp.width, canvasTemp.height);
-            capturedPhotoData = canvasTemp.toDataURL('image/jpeg', 0.85);
-            
-            // 停止相機
-            stopCamera();
-            
-            // 直接跳轉到編輯頁面（不選擇模板，在編輯頁面選擇）
-            confirmPhoto();
+            // 檢查視頻是否準備好
+            if (!video || !video.srcObject) {
+                console.warn('視頻未準備好，無法拍照');
+                alert('相機尚未準備好，請稍候再試');
+                return;
+            }
+
+            // 檢查視頻尺寸
+            if (!video.videoWidth || !video.videoHeight) {
+                console.warn('視頻尺寸無效，無法拍照');
+                alert('相機畫面尚未載入完成，請稍候再試');
+                return;
+            }
+
+            try {
+                // 禁用按鈕，防止重複點擊
+                captureBtn.disabled = true;
+                captureBtn.style.opacity = '0.5';
+                captureBtn.style.cursor = 'not-allowed';
+
+                // 創建畫布並繪製視頻幀
+                const canvasTemp = document.createElement('canvas');
+                canvasTemp.width = video.videoWidth;
+                canvasTemp.height = video.videoHeight;
+                const ctx = canvasTemp.getContext('2d');
+                
+                // 繪製視頻到畫布
+                ctx.drawImage(video, 0, 0, canvasTemp.width, canvasTemp.height);
+                
+                // 轉換為圖片數據
+                capturedPhotoData = canvasTemp.toDataURL('image/png');
+                
+                // 驗證照片數據
+                if (!capturedPhotoData || capturedPhotoData.length < 100) {
+                    throw new Error('照片數據無效');
+                }
+
+                console.log('✅ 照片拍攝成功，數據長度:', capturedPhotoData.length);
+                
+                // 停止相機
+                stopCamera();
+                
+                // 直接跳轉到編輯頁面（不選擇模板，在編輯頁面選擇）
+                confirmPhoto();
+            } catch (error) {
+                console.error('拍照失敗:', error);
+                alert('拍照失敗，請重試\n\n錯誤: ' + error.message);
+                // 恢復按鈕狀態
+                captureBtn.disabled = false;
+                captureBtn.style.opacity = '1';
+                captureBtn.style.cursor = 'pointer';
+            }
         }
 
         // 重新拍攝
         function retakePhoto() {
             photoPreview.classList.remove('active');
             capturedPhotoData = null;
+            
+            // 恢復按鈕狀態
+            captureBtn.disabled = false;
+            captureBtn.style.opacity = '1';
+            captureBtn.style.cursor = 'pointer';
+            
+            // 重新啟動相機
             startCamera();
         }
 
         // 確認照片，跳轉到編輯頁面
         function confirmPhoto() {
-            if (!capturedPhotoData) return;
+            if (!capturedPhotoData) {
+                console.error('沒有照片數據');
+                alert('沒有照片數據，請重新拍照');
+                return;
+            }
+
+            // 驗證照片數據
+            if (capturedPhotoData.length < 100) {
+                console.error('照片數據無效');
+                alert('照片數據無效，請重新拍照');
+                return;
+            }
             
             // 檢查 localStorage 是否可用
             if (!isLocalStorageAvailable()) {
@@ -914,23 +963,49 @@
                     timestamp: Date.now()
                 };
                 
-                saveCameraDataWithEviction(dataToPass);
+                // 檢查數據大小
+                const dataString = JSON.stringify(dataToPass);
+                const dataSizeMB = (dataString.length / 1024 / 1024).toFixed(2);
+                console.log('照片數據大小:', dataSizeMB, 'MB');
+                
+                if (dataString.length > 5 * 1024 * 1024) {
+                    console.warn('照片數據較大，可能影響性能');
+                }
+                
+                localStorage.setItem('cameraData', dataString);
                 
                 // 驗證數據是否成功保存
                 const verifyData = localStorage.getItem('cameraData');
                 if (!verifyData) {
                     throw new Error('數據保存後無法讀取，可能被瀏覽器阻止');
                 }
+
+                // 驗證數據完整性
+                try {
+                    const parsedData = JSON.parse(verifyData);
+                    if (!parsedData.photo || parsedData.photo.length < 100) {
+                        throw new Error('保存的數據不完整');
+                    }
+                    console.log('✅ 照片數據保存成功並驗證通過');
+                } catch (parseError) {
+                    throw new Error('保存的數據格式錯誤: ' + parseError.message);
+                }
                 
                 // 跳轉到編輯頁面
                 window.location.href = 'editor.html?fromCamera=1';
             } catch (e) {
                 console.error('保存數據失敗:', e);
-                if (isQuotaExceededError(e)) {
-                    alert('⚠️ 儲存空間不足（The quota has been exceeded）！\n\n我已嘗試自動刪除最舊的照片釋放空間，但仍不足。\n\n建議：\n1. 到「照片區」刪掉一些舊照片（或清除網站資料）\n2. 重新拍照\n\n錯誤：' + e.message);
+                let errorMessage = '⚠️ 保存照片數據失敗！\n\n';
+                
+                if (e.name === 'QuotaExceededError') {
+                    errorMessage += '存儲空間不足，請刪除一些舊照片後重試';
+                } else if (e.name === 'SecurityError') {
+                    errorMessage += '瀏覽器安全設定阻止了數據存儲\n\n請檢查瀏覽器設定：\n1. 允許 Cookie 和網站數據\n2. 關閉追蹤預防功能\n3. 確保使用本地服務器運行（不要直接打開 HTML 文件）';
                 } else {
-                    alert('⚠️ 保存照片數據失敗！\n\n錯誤：' + e.message + '\n\n請檢查瀏覽器設定：\n1. 允許 Cookie 和網站數據\n2. 關閉追蹤預防功能\n3. 確保使用本地服務器運行（不要直接打開 HTML 文件）\n4. 重新拍照');
+                    errorMessage += '錯誤：' + e.message + '\n\n請檢查瀏覽器設定：\n1. 允許 Cookie 和網站數據\n2. 關閉追蹤預防功能\n3. 確保使用本地服務器運行（不要直接打開 HTML 文件）\n4. 重新拍照';
                 }
+                
+                alert(errorMessage);
             }
         }
 
@@ -938,6 +1013,10 @@
         function showCostumeTemplateModal() {
             // 清空並生成模板選項
             costumeTemplateGrid.innerHTML = '';
+            // 目前沒有模板，跳過生成
+            if (COSTUME_TEMPLATES.length === 0) {
+                return;
+            }
             COSTUME_TEMPLATES.forEach((template, index) => {
                 const item = document.createElement('div');
                 item.className = 'costume-template-item';
@@ -1000,17 +1079,13 @@
                     timestamp: Date.now()
                 };
                 
-                saveCameraDataWithEviction(dataToPass);
+                localStorage.setItem('cameraData', JSON.stringify(dataToPass));
                 
                 // 跳轉到編輯頁面
                 window.location.href = 'editor.html?fromCamera=1';
             } catch (e) {
                 console.error('保存數據失敗:', e);
-                if (isQuotaExceededError(e)) {
-                    alert('⚠️ 儲存空間不足（The quota has been exceeded）！\n\n建議先刪掉一些舊照片/清除網站資料後再重試。');
-                } else {
-                    alert('保存照片數據失敗，請檢查瀏覽器設定後重試');
-                }
+                alert('保存照片數據失敗，請檢查瀏覽器設定後重試');
             }
         }
 

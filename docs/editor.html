@@ -99,8 +99,8 @@
         .edit-guide-thumb {
             position: absolute;
             top: 55%;
-            left: -300px;
-            width: 350px;
+            left: -240px;
+            width: 240px;
             height: auto;
             display: block;
             pointer-events: none;
@@ -200,14 +200,14 @@
         /* 響應式設計：在不同屏幕尺寸下調整確認按鈕位置 */
         @media (min-width: 1400px) {
             .editor-confirm-btn {
-                right: 250px;
+                right: 280px;
                 transform: none;
             }
         }
         
         @media (max-width: 1399px) {
             .editor-confirm-btn {
-                right: 20px;
+                right: 30px;
                 transform: none;
             }
         }
@@ -1738,9 +1738,10 @@
             { id: 'sticker6', name: '紅色心形眼鏡', image: 'POT/sticker6.png' }
         ];
 
- 
-       
+        // 模板數據（目前未使用，保留空數組以備將來使用）
+        const TEMPLATES = [];
 
+       
         let selectedTemplateId = null; // 當前選中的模板ID
 
         // 初始化
@@ -2236,6 +2237,11 @@
             confirmBtn.disabled = true;
 
             grid.innerHTML = '';
+            // 目前沒有模板，顯示提示訊息
+            if (TEMPLATES.length === 0) {
+                grid.innerHTML = '<div style="padding: 40px; text-align: center; color: #999;">暫無可用模板</div>';
+                return;
+            }
             TEMPLATES.forEach((template) => {
                 const item = document.createElement('div');
                 item.className = 'template-selection-item';
@@ -2706,10 +2712,9 @@
             // 將畫布導出為圖片（包含背景和所有物件）
             let imageData = null;
             try {
-                // 平板 localStorage 容量很小：用 JPEG 可大幅降低大小，避免 quota exceeded
                 imageData = canvas.toDataURL({
-                    format: 'jpeg',
-                    quality: 0.85,
+                    format: 'png',
+                    quality: 1,
                     multiplier: 1
                 });
                 
@@ -2849,25 +2854,7 @@
                     
                     // 檢查是否是配額超出錯誤
                     if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
-                        // 自動刪除最舊的照片後重試（避免平板直接卡住）
-                        let retried = false;
-                        try {
-                            while (savedPhotos.length > 1) {
-                                savedPhotos.pop(); // 刪最舊
-                                localStorage.setItem('savedPhotos', JSON.stringify(savedPhotos));
-                                retried = true;
-                                // 寫入成功就跳出
-                                break;
-                            }
-                        } catch (_) {
-                            // ignore，再走原本 alert
-                        }
-
-                        if (retried) {
-                            alert('⚠️ 儲存空間不足！\n\n我已自動刪除最舊的照片以釋放空間，請再按一次「完成/上傳」保存。');
-                        } else {
-                            alert('⚠️ 存儲空間不足！\n\n請刪除一些舊照片後再試，或使用其他瀏覽器。\n\n錯誤: ' + e.message);
-                        }
+                        alert('⚠️ 存儲空間不足！\n\n請刪除一些舊照片後再試，或使用其他瀏覽器。\n\n錯誤: ' + e.message);
                     } else if (e.name === 'SecurityError' || e.code === 18) {
                         alert('⚠️ 瀏覽器安全設定阻止了存儲！\n\n請檢查瀏覽器設定：\n1. 允許 Cookie 和網站數據\n2. 關閉追蹤預防功能\n3. 確保使用本地服務器運行（不要直接打開 HTML 文件）\n\n錯誤: ' + e.message);
                     } else {
@@ -2921,9 +2908,7 @@
                     };
 
                     mediaRecorder.onstop = () => {
-                        // 不要強制轉成 wav（非常大）；使用實際錄音格式通常會更小（例如 opus/mp4）
-                        const mimeType = (mediaRecorder && mediaRecorder.mimeType) ? mediaRecorder.mimeType : '';
-                        audioBlob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
+                        audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                         // 如果之前有音訊 URL，先釋放它
                         if (audioUrl) {
                             URL.revokeObjectURL(audioUrl);
