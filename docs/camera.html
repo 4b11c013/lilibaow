@@ -566,45 +566,8 @@
     </div>
 
     <script>
-        // 照片框模板數據
-        const COSTUME_TEMPLATES = [
-            { 
-                id: 'frame1', 
-                name: '圓角相框', 
-                image: 'POT/template1.png.png',
-                photoArea: { x: 0.05, y: 0.05, width: 0.9, height: 0.9 }
-            },
-            { 
-                id: 'frame2', 
-                name: '方形相框', 
-                image: 'POT/template2.png.png',
-                photoArea: { x: 0.08, y: 0.08, width: 0.84, height: 0.84 }
-            },
-            { 
-                id: 'frame3', 
-                name: '橢圓相框', 
-                image: 'POT/template3.png.png',
-                photoArea: { x: 0.05, y: 0.08, width: 0.9, height: 0.84 }
-            },
-            { 
-                id: 'frame4', 
-                name: '心形相框', 
-                image: 'POT/template4.png.png',
-                photoArea: { x: 0.08, y: 0.12, width: 0.84, height: 0.76 }
-            },
-            { 
-                id: 'frame5', 
-                name: '星形相框', 
-                image: 'POT/template5.png.png',
-                photoArea: { x: 0.05, y: 0.05, width: 0.9, height: 0.9 }
-            },
-            { 
-                id: 'frame6', 
-                name: '花邊相框', 
-                image: 'POT/template6.png.png',
-                photoArea: { x: 0.06, y: 0.06, width: 0.88, height: 0.88 }
-            }
-        ];
+        // 照片框模板數據（目前未使用，保留空數組以備將來使用）
+        const COSTUME_TEMPLATES = [];
 
         let mediaStream = null;
         let capturedPhotoData = null;
@@ -946,8 +909,8 @@
                 // 停止相機
                 stopCamera();
                 
-                // 直接跳轉到編輯頁面（不選擇模板）
-                goToEditor();
+                // 直接跳轉到編輯頁面（不選擇模板，在編輯頁面選擇）
+                confirmPhoto();
             } catch (error) {
                 console.error('拍照失敗:', error);
                 alert('拍照失敗，請重試\n\n錯誤: ' + error.message);
@@ -972,8 +935,8 @@
             startCamera();
         }
 
-        // 直接跳轉到編輯頁面（不選擇模板）
-        function goToEditor() {
+        // 確認照片，跳轉到編輯頁面
+        function confirmPhoto() {
             if (!capturedPhotoData) {
                 console.error('沒有照片數據');
                 alert('沒有照片數據，請重新拍照');
@@ -1043,11 +1006,6 @@
                 }
                 
                 alert(errorMessage);
-                
-                // 恢復按鈕狀態
-                captureBtn.disabled = false;
-                captureBtn.style.opacity = '1';
-                captureBtn.style.cursor = 'pointer';
             }
         }
 
@@ -1055,6 +1013,10 @@
         function showCostumeTemplateModal() {
             // 清空並生成模板選項
             costumeTemplateGrid.innerHTML = '';
+            // 目前沒有模板，跳過生成
+            if (COSTUME_TEMPLATES.length === 0) {
+                return;
+            }
             COSTUME_TEMPLATES.forEach((template, index) => {
                 const item = document.createElement('div');
                 item.className = 'costume-template-item';
@@ -1139,32 +1101,18 @@
             window.location.href = 'index.html';
         }
 
-        // 頁面載入時初始化
+        // 事件監聽
+        captureBtn.addEventListener('click', capturePhoto);
+        retakeBtn.addEventListener('click', retakePhoto);
+        confirmPhotoBtn.addEventListener('click', confirmPhoto);
+        confirmCostumeBtn.addEventListener('click', confirmTemplate);
+        cancelCostumeBtn.addEventListener('click', cancelTemplate);
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', goHome);
+        }
+
+        // 頁面載入時啟動相機
         window.addEventListener('DOMContentLoaded', () => {
-            // 確保所有元素都存在後再綁定事件
-            if (captureBtn) {
-                captureBtn.addEventListener('click', capturePhoto);
-            } else {
-                console.error('拍照按鈕元素未找到');
-            }
-            
-            if (retakeBtn) {
-                retakeBtn.addEventListener('click', retakePhoto);
-            }
-            
-            if (confirmCostumeBtn) {
-                confirmCostumeBtn.addEventListener('click', confirmTemplate);
-            }
-            
-            if (cancelCostumeBtn) {
-                cancelCostumeBtn.addEventListener('click', cancelTemplate);
-            }
-            
-            if (cancelBtn) {
-                cancelBtn.addEventListener('click', goHome);
-            }
-            
-            // 啟動相機
             startCamera();
         });
 
@@ -1175,3 +1123,4 @@
     </script>
 </body>
 </html>
+

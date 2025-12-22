@@ -99,8 +99,8 @@
         .edit-guide-thumb {
             position: absolute;
             top: 55%;
-            left: -280px;
-            width: 280px;
+            left: -240px;
+            width: 240px;
             height: auto;
             display: block;
             pointer-events: none;
@@ -1738,9 +1738,10 @@
             { id: 'sticker6', name: '紅色心形眼鏡', image: 'POT/sticker6.png' }
         ];
 
- 
-       
+        // 模板數據（目前未使用，保留空數組以備將來使用）
+        const TEMPLATES = [];
 
+       
         let selectedTemplateId = null; // 當前選中的模板ID
 
         // 初始化
@@ -2236,6 +2237,11 @@
             confirmBtn.disabled = true;
 
             grid.innerHTML = '';
+            // 目前沒有模板，顯示提示訊息
+            if (TEMPLATES.length === 0) {
+                grid.innerHTML = '<div style="padding: 40px; text-align: center; color: #999;">暫無可用模板</div>';
+                return;
+            }
             TEMPLATES.forEach((template) => {
                 const item = document.createElement('div');
                 item.className = 'template-selection-item';
