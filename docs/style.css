@@ -112,7 +112,7 @@ body {
     align-items: center;
     gap: 6px;
     order: 2;
-    margin-top: -120px;
+    margin-top: -140px;
 }
 
 .upload-inline {
@@ -222,7 +222,7 @@ body {
     align-items: center;
     height: 24px;
     pointer-events: none;
-    transform: translateY(84px); /* move further down */
+    transform: translateY(74px); /* move further down */
 }
 
 .guide-arrow-down {
@@ -246,7 +246,6 @@ body {
     font-weight: 700;
     line-height: 1.6;
     margin-bottom: 0;
-    margin-top: 60px;
     text-shadow: none;
     display: inline-block;
     padding: 0;
@@ -340,17 +339,16 @@ body {
     cursor: pointer;
     overflow: hidden;
     transition: transform 0.2s ease, opacity 0.2s ease;
-    transform: translateY(20px);
 }
 
 /* upload-guide removed per request */
 
 .main-circle:hover {
-    transform: translateY(20px) scale(1.05);
+    transform: scale(1.05);
 }
 
 .main-circle:active {
-    transform: translateY(20px) scale(0.95);
+    transform: scale(0.95);
     opacity: 0.8;
 }
 

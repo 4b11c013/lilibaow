@@ -83,7 +83,7 @@
             align-items: center;
             gap: 24px;
             z-index: 100;
-            margin-top: -60px;
+            margin-top: -40px;
         }
 
         .camera-btn {
@@ -307,7 +307,7 @@
                 padding: 20px;
                 padding-bottom: 10px;
                 gap: 20px;
-                margin-top: -50px;
+                margin-top: -35px;
             }
 
             .camera-btn img {
@@ -342,7 +342,7 @@
                 padding: 16px;
                 padding-bottom: 8px;
                 gap: 16px;
-                margin-top: -45px;
+                margin-top: -30px;
             }
 
             .camera-btn img {
@@ -395,7 +395,7 @@
                 padding: 12px;
                 padding-bottom: 6px;
                 gap: 12px;
-                margin-top: -35px;
+                margin-top: -20px;
             }
 
             .camera-btn img {
@@ -466,7 +466,7 @@
                 padding: 32px;
                 padding-bottom: 16px;
                 gap: 32px;
-                margin-top: -70px;
+                margin-top: -50px;
             }
 
             .camera-btn img {
@@ -492,7 +492,7 @@
                 padding: 10px;
                 padding-bottom: 5px;
                 gap: 10px;
-                margin-top: -30px;
+                margin-top: -15px;
             }
 
             .camera-btn img {
@@ -566,8 +566,45 @@
     </div>
 
     <script>
-        // 照片框模板數據（目前未使用，保留空數組以備將來使用）
-        const COSTUME_TEMPLATES = [];
+        // 照片框模板數據
+        const COSTUME_TEMPLATES = [
+            { 
+                id: 'frame1', 
+                name: '圓角相框', 
+                image: 'POT/template1.png.png',
+                photoArea: { x: 0.05, y: 0.05, width: 0.9, height: 0.9 }
+            },
+            { 
+                id: 'frame2', 
+                name: '方形相框', 
+                image: 'POT/template2.png.png',
+                photoArea: { x: 0.08, y: 0.08, width: 0.84, height: 0.84 }
+            },
+            { 
+                id: 'frame3', 
+                name: '橢圓相框', 
+                image: 'POT/template3.png.png',
+                photoArea: { x: 0.05, y: 0.08, width: 0.9, height: 0.84 }
+            },
+            { 
+                id: 'frame4', 
+                name: '心形相框', 
+                image: 'POT/template4.png.png',
+                photoArea: { x: 0.08, y: 0.12, width: 0.84, height: 0.76 }
+            },
+            { 
+                id: 'frame5', 
+                name: '星形相框', 
+                image: 'POT/template5.png.png',
+                photoArea: { x: 0.05, y: 0.05, width: 0.9, height: 0.9 }
+            },
+            { 
+                id: 'frame6', 
+                name: '花邊相框', 
+                image: 'POT/template6.png.png',
+                photoArea: { x: 0.06, y: 0.06, width: 0.88, height: 0.88 }
+            }
+        ];
 
         let mediaStream = null;
         let capturedPhotoData = null;
@@ -1013,10 +1050,6 @@
         function showCostumeTemplateModal() {
             // 清空並生成模板選項
             costumeTemplateGrid.innerHTML = '';
-            // 目前沒有模板，跳過生成
-            if (COSTUME_TEMPLATES.length === 0) {
-                return;
-            }
             COSTUME_TEMPLATES.forEach((template, index) => {
                 const item = document.createElement('div');
                 item.className = 'costume-template-item';
