@@ -270,6 +270,7 @@ if (recordBtn) {
         stopRecording();
     }
 });
+}
 
 function stopRecording() {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
@@ -319,7 +320,3 @@ document.querySelector('.upload-btn').addEventListener('click', () => {
 });
 
 } // 關閉 else 區塊（第 34 行的 else）
-
-
-
-
