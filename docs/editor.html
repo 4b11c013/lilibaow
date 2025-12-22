@@ -99,7 +99,7 @@
         .edit-guide-thumb {
             position: absolute;
             top: 55%;
-            left: -340px;
+            left: -300px;
             width: 350px;
             height: auto;
             display: block;
@@ -200,14 +200,14 @@
         /* 響應式設計：在不同屏幕尺寸下調整確認按鈕位置 */
         @media (min-width: 1400px) {
             .editor-confirm-btn {
-                right: 300px;
+                right: 250px;
                 transform: none;
             }
         }
         
         @media (max-width: 1399px) {
             .editor-confirm-btn {
-                right: 40px;
+                right: 20px;
                 transform: none;
             }
         }
@@ -1738,45 +1738,8 @@
             { id: 'sticker6', name: '紅色心形眼鏡', image: 'POT/sticker6.png' }
         ];
 
-        // 模板數據
-        const TEMPLATES = [
-            { 
-                id: 'frame1', 
-                name: '圓角相框', 
-                image: 'POT/template1.png.png',
-                photoArea: { x: 0.05, y: 0.05, width: 0.9, height: 0.9 }
-            },
-            { 
-                id: 'frame2', 
-                name: '方形相框', 
-                image: 'POT/template2.png.png',
-                photoArea: { x: 0.08, y: 0.08, width: 0.84, height: 0.84 }
-            },
-            { 
-                id: 'frame3', 
-                name: '橢圓相框', 
-                image: 'POT/template3.png.png',
-                photoArea: { x: 0.05, y: 0.08, width: 0.9, height: 0.84 }
-            },
-            { 
-                id: 'frame4', 
-                name: '心形相框', 
-                image: 'POT/template4.png.png',
-                photoArea: { x: 0.08, y: 0.12, width: 0.84, height: 0.76 }
-            },
-            { 
-                id: 'frame5', 
-                name: '星形相框', 
-                image: 'POT/template5.png.png',
-                photoArea: { x: 0.05, y: 0.05, width: 0.9, height: 0.9 }
-            },
-            { 
-                id: 'frame6', 
-                name: '花邊相框', 
-                image: 'POT/template6.png.png',
-                photoArea: { x: 0.06, y: 0.06, width: 0.88, height: 0.88 }
-            }
-        ];
+ 
+       
 
         let selectedTemplateId = null; // 當前選中的模板ID
 
